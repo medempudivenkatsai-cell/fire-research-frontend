@@ -1,65 +1,123 @@
-import Image from "next/image";
+// app/page.tsx
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-slate-950 text-slate-50">
+      {/* Top bar */}
+      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/20 text-lg font-bold text-orange-400">
+              🔥
+            </span>
+            <div>
+              <div className="text-sm font-semibold tracking-wide text-orange-300">
+                Fire Research
+              </div>
+              <div className="text-xs text-slate-400">
+                Collaboration Platform (MVP)
+              </div>
+            </div>
+          </div>
+
+          <nav className="flex items-center gap-4 text-sm">
+            <Link href="#" className="text-slate-300 hover:text-white">
+              Library
+            </Link>
+            <Link href="#" className="text-slate-300 hover:text-white">
+              Datasets
+            </Link>
+            <Link href="#" className="text-slate-300 hover:text-white">
+              About
+            </Link>
+            <button className="rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-slate-950 hover:bg-orange-400">
+              Sign in (soon)
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero / main content */}
+      <section className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 md:flex-row md:items-start">
+        {/* Left side text */}
+        <div className="flex-1">
+          <span className="inline-flex rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-300">
+            In development • Student GA project
+          </span>
+
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-50 md:text-4xl">
+            Central library for{" "}
+            <span className="text-orange-400">fire investigation</span>{" "}
+            research.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          <p className="mt-4 text-sm leading-relaxed text-slate-300 md:text-base">
+            This platform will host fire investigation papers, experiments, and
+            burn pattern datasets in one searchable place. Investigators,
+            professors, and students will be able to upload PDFs, search across
+            thousands of pages, and discuss findings.
           </p>
+
+          <div className="mt-6 grid gap-4 text-sm md:grid-cols-2">
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+              <h2 className="text-sm font-semibold text-slate-100">
+                🔎 Planned features
+              </h2>
+              <ul className="mt-2 space-y-1 text-xs text-slate-300">
+                <li>• Full-text search across all PDFs</li>
+                <li>• Page-level snippets with highlights</li>
+                <li>• PDF viewer with comments per page</li>
+                <li>• Datasets for burn pattern analysis</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+              <h2 className="text-sm font-semibold text-slate-100">
+                🧱 Tech stack (MVP)
+              </h2>
+              <ul className="mt-2 space-y-1 text-xs text-slate-300">
+                <li>• Next.js + Tailwind (frontend)</li>
+                <li>• FastAPI on Render (backend)</li>
+                <li>• Supabase (Auth, DB, Storage)</li>
+                <li>• Meilisearch for search index</li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Right side “status” card */}
+        <aside className="mt-4 w-full max-w-sm md:mt-0">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm">
+            <h2 className="text-sm font-semibold text-slate-100">
+              Project status
+            </h2>
+            <p className="mt-2 text-xs text-slate-300">
+              You&apos;re currently on the{" "}
+              <span className="font-semibold text-orange-300">frontend</span>{" "}
+              setup stage.
+            </p>
+
+            <ol className="mt-3 space-y-2 text-xs text-slate-300">
+              <li>✅ Step 1 – Node, Git, GitHub, Vercel setup</li>
+              <li>✅ Step 2 – Next.js app deployed to Vercel</li>
+              <li>🟡 Next – Supabase + backend + search worker</li>
+            </ol>
+
+            <p className="mt-4 text-[11px] text-slate-400">
+              This page will later connect to real data: documents,
+              search results, and comments from Supabase and Meilisearch.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-800 bg-slate-950/80">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 text-[11px] text-slate-500">
+          <span>Fire Research Collaboration Platform • MVP UI</span>
+          <span>Built as GA project for fire investigation research</span>
         </div>
-      </main>
-    </div>
+      </footer>
+    </main>
   );
 }
