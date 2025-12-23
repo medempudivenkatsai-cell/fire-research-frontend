@@ -1,26 +1,29 @@
 "use client";
 
-import React from "react";
-import { Viewer, Worker } from "@react-pdf-viewer/core";
+import { Viewer, Worker, SpecialZoomLevel } from "@react-pdf-viewer/core";
 import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
+
+import "@react-pdf-viewer/core/lib/styles/index.css";
+import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 
 type Props = {
   url: string;
-  page?: number; // 1-based
-  onPageChange?: (page: number) => void;
+  initialPage?: number; // 1-based
+  onPageChange?: (page: number) => void; // 1-based
 };
 
-export default function PDFViewerClient({ url, page = 1, onPageChange }: Props) {
-  // IMPORTANT: do NOT wrap this in useMemo()
-  const layoutPluginInstance = defaultLayoutPlugin();
+export default function PDFViewerClient({ url, initialPage = 1, onPageChange }: Props) {
+  const layoutPlugin = defaultLayoutPlugin();
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
+    <div className="h-full w-full">
+      <Worker workerUrl="/pdf.worker.min.mjs">
         <Viewer
           fileUrl={url}
-          plugins={[layoutPluginInstance]}
-          initialPage={Math.max(0, page - 1)}
+          plugins={[layoutPlugin]}
+          defaultScale={SpecialZoomLevel.PageWidth}
+          // @react-pdf-viewer uses 0-based page index:
+          initialPage={Math.max(0, (initialPage || 1) - 1)}
           onPageChange={(e) => onPageChange?.(e.currentPage + 1)}
         />
       </Worker>
