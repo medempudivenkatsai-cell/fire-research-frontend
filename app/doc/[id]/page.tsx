@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import PDFViewerClient from "@/components/PDFViewerClient";
 import CommentsPanel from "@/components/CommentsPanel";
@@ -14,103 +13,91 @@ const API =
 type Doc = {
   id: string;
   title: string;
-  pdf_url: string;
-  pages?: number;
-  created_at?: string;
+  storage_path: string;
 };
 
-export default function DocPage() {
-  const params = useParams();
+function DocInner() {
+  const params = useParams<{ id: string }>();
+  const docId = params?.id;
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const docId = (params?.id as string) || "";
-  const pageFromUrl = Math.max(1, Number(searchParams.get("page") || "1") || 1);
+  const initialPage = useMemo(() => {
+    const p = Number(searchParams?.get("page") || "1");
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  }, [searchParams]);
 
   const [doc, setDoc] = useState<Doc | null>(null);
-  const [msg, setMsg] = useState<string>("");
+  const [pdfUrl, setPdfUrl] = useState<string>("");
+  const [err, setErr] = useState<string>("");
 
   useEffect(() => {
     if (!docId) return;
 
-    let cancelled = false;
-
     (async () => {
       try {
-        setMsg("");
-        const res = await fetch(`${API}/documents/${docId}`);
-        if (!res.ok) throw new Error(`Failed to load document (${res.status})`);
-        const data = (await res.json()) as Doc;
-        if (!cancelled) setDoc(data);
+        setErr("");
+        const r = await fetch(`${API}/documents/${encodeURIComponent(docId)}`);
+        if (!r.ok) throw new Error(await r.text());
+        const d = (await r.json()) as Doc;
+        setDoc(d);
+
+        // backend endpoint that streams the PDF
+        setPdfUrl(`${API}/pdf/${encodeURIComponent(docId)}`);
       } catch (e: any) {
-        if (!cancelled) setMsg(e?.message || "Failed to load document");
+        setErr(e?.message || "Failed to load document");
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [docId]);
 
-  const onPageChange = useCallback(
-    (p: number) => {
-      const next = Math.max(1, p || 1);
-      // keep URL in sync (no full reload)
-      router.replace(`/doc/${docId}?page=${next}`, { scroll: false });
-    },
-    [router, docId]
-  );
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-7xl px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-xs text-white/60">
-              <Link className="hover:underline" href="/dashboard">
-                ← Back to library
-              </Link>
-            </div>
-            <h1 className="mt-1 text-lg font-semibold">
-              {doc?.title || "Document"}
-            </h1>
-          </div>
+    <div className="min-h-screen px-6 py-6 text-white">
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
+          onClick={() => router.push("/")}
+        >
+          ← Back to library
+        </button>
 
-          {doc?.pdf_url ? (
-            <Link
-              className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm hover:bg-white/15"
-              href={`/viewer?url=${encodeURIComponent(doc.pdf_url)}&page=${pageFromUrl}`}
-              target="_blank"
-            >
-              Open Fullscreen
-            </Link>
-          ) : null}
+        <button
+          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
+          onClick={() => router.push(`/viewer?doc=${encodeURIComponent(docId || "")}`)}
+        >
+          Open Fullscreen
+        </button>
+      </div>
+
+      <div className="text-xl font-semibold">{doc?.title || "Document"}</div>
+      {err ? <div className="mt-2 text-sm text-red-300">{err}</div> : null}
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_420px]">
+        <div className="h-[78vh]">
+          {pdfUrl ? (
+            <PDFViewerClient url={pdfUrl} />
+          ) : (
+            <div className="text-sm text-zinc-300">No PDF URL.</div>
+          )}
         </div>
 
-        {msg ? <p className="mt-3 text-sm text-red-300">{msg}</p> : null}
-
-        <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_420px]">
-          {/* PDF */}
-          <div className="min-h-[75vh] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-            {doc?.pdf_url ? (
-              <PDFViewerClient
-                url={doc.pdf_url}
-                initialPage={pageFromUrl}
-                onPageChange={onPageChange}
-              />
-            ) : (
-              <div className="p-6 text-white/70">Loading PDF…</div>
-            )}
-          </div>
-
-          {/* Comments */}
-          <div className="rounded-2xl border border-white/10 bg-white/5">
-            <div className="h-[75vh] overflow-auto p-3">
-              <CommentsPanel apiBase={API} documentId={docId} page={pageFromUrl} />
-            </div>
-          </div>
+        <div className="h-[78vh] overflow-auto rounded-xl border border-white/10 bg-white/5">
+          <CommentsPanel
+            apiBase={API}
+            documentId={docId}
+            page={initialPage}
+          />
         </div>
       </div>
     </div>
   );
 }
+
+export default function Page() {
+  // keeps Next happy with useSearchParams
+  return (
+    <Suspense fallback={<div className="p-6 text-white">Loading…</div>}>
+      <DocInner />
+    </Suspense>
+  );
+}
+
