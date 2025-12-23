@@ -1,10 +1,23 @@
-export default function ViewerPage({
-  searchParams,
-}: {
-  searchParams: { url?: string; page?: string };
-}) {
-  const url = searchParams.url ? decodeURIComponent(searchParams.url) : "";
-  const page = Math.max(1, Number(searchParams.page || "1") || 1);
+"use client";
+
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+
+export default function ViewerPage() {
+  const searchParams = useSearchParams();
+
+  const rawUrl = searchParams.get("url") ?? "";
+  const rawPage = searchParams.get("page") ?? "1";
+
+  const url = useMemo(() => {
+    try {
+      return rawUrl ? decodeURIComponent(rawUrl) : "";
+    } catch {
+      return rawUrl;
+    }
+  }, [rawUrl]);
+
+  const page = Math.max(1, Number(rawPage) || 1);
 
   if (!url) {
     return (
@@ -14,10 +27,7 @@ export default function ViewerPage({
     );
   }
 
-  // Chrome/Edge built-in viewer:
-  // - pagemode=bookmarks tries to open outline/bookmarks (if PDF has them)
-  // - page jumps to page
-  // - zoom=page-width fits nicely
+  // Chrome/Edge built-in PDF viewer params
   const viewerUrl = `${url}#page=${page}&pagemode=bookmarks&zoom=page-width`;
 
   return (
@@ -25,7 +35,7 @@ export default function ViewerPage({
       src={viewerUrl}
       title="PDF"
       style={{ width: "100vw", height: "100vh", border: "none" }}
-      allow="fullscreen"
+      allowFullScreen
     />
   );
 }
