@@ -1,123 +1,177 @@
-// app/page.tsx
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { clearSession, useSession } from "@/lib/session";
+
+const API =
+  process.env.NEXT_PUBLIC_API ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "http://127.0.0.1:8010";
+
+type Hit = {
+  id: string;
+  title: string;
+  page_number: number;
+  snippet: string;
+  pdf_url: string;
+  created_at: string;
+};
 
 export default function Home() {
+  const { session, ready } = useSession();
+  const role = session?.role || "viewer";
+
+  const [docs, setDocs] = useState<Hit[]>([]);
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function load() {
+    setBusy(true);
+    setMsg("");
+    try {
+      const r = await fetch(`${API}/documents?limit=300`);
+      const data = await r.json();
+      setDocs(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setMsg(e?.message || "Failed to load documents");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function search() {
+    const text = q.trim();
+    if (!text) return load();
+    setBusy(true);
+    setMsg("");
+    try {
+      const r = await fetch(`${API}/search?q=${encodeURIComponent(text)}&limit=200`);
+      const data = await r.json();
+      setDocs(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setMsg(e?.message || "Search failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      {/* Top bar */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/20 text-lg font-bold text-orange-400">
-              🔥
-            </span>
-            <div>
-              <div className="text-sm font-semibold tracking-wide text-orange-300">
-                Fire Research
-              </div>
-              <div className="text-xs text-slate-400">
-                Collaboration Platform (MVP)
-              </div>
-            </div>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <div className="mx-auto max-w-5xl p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold">Fire Research Library</h1>
+            <p className="text-zinc-400 mt-1">
+              Upload PDFs, search text, and add investigator notes (comments).
+            </p>
+
+            <p className="text-xs text-zinc-400 mt-2" suppressHydrationWarning>
+              Logged in as:{" "}
+              <span className="text-zinc-200">
+                {ready ? (session?.name ? `${session.name} (${role})` : "Viewer") : "Loading..."}
+              </span>
+            </p>
           </div>
 
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-slate-300 hover:text-white">
-              Library
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/login"
+              className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/15"
+            >
+              Login
             </Link>
-            <Link href="#" className="text-slate-300 hover:text-white">
-              Datasets
+
+            {(role === "researcher" || role === "admin") && (
+              <Link
+                href="/upload"
+                className="rounded-xl bg-zinc-100 px-4 py-2 text-sm text-zinc-950 font-semibold hover:bg-white"
+              >
+                Upload PDF
+              </Link>
+            )}
+<Link href="/assets" className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
+  Assets
+</Link>
+
+{(role === "researcher" || role === "admin") && (
+  <Link href="/dashboard" className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
+    Dashboard
+  </Link>
+)}
+
+            <Link
+              href="/admin"
+              className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/15"
+            >
+              Admin Console
             </Link>
-            <Link href="#" className="text-slate-300 hover:text-white">
-              About
-            </Link>
-            <button className="rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-slate-950 hover:bg-orange-400">
-              Sign in (soon)
+
+            <button
+              onClick={() => {
+                clearSession();
+                location.reload();
+              }}
+              className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/15"
+            >
+              Logout
             </button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero / main content */}
-      <section className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 md:flex-row md:items-start">
-        {/* Left side text */}
-        <div className="flex-1">
-          <span className="inline-flex rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-300">
-            In development • Student GA project
-          </span>
-
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-50 md:text-4xl">
-            Central library for{" "}
-            <span className="text-orange-400">fire investigation</span>{" "}
-            research.
-          </h1>
-
-          <p className="mt-4 text-sm leading-relaxed text-slate-300 md:text-base">
-            This platform will host fire investigation papers, experiments, and
-            burn pattern datasets in one searchable place. Investigators,
-            professors, and students will be able to upload PDFs, search across
-            thousands of pages, and discuss findings.
-          </p>
-
-          <div className="mt-6 grid gap-4 text-sm md:grid-cols-2">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <h2 className="text-sm font-semibold text-slate-100">
-                🔎 Planned features
-              </h2>
-              <ul className="mt-2 space-y-1 text-xs text-slate-300">
-                <li>• Full-text search across all PDFs</li>
-                <li>• Page-level snippets with highlights</li>
-                <li>• PDF viewer with comments per page</li>
-                <li>• Datasets for burn pattern analysis</li>
-              </ul>
-            </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <h2 className="text-sm font-semibold text-slate-100">
-                🧱 Tech stack (MVP)
-              </h2>
-              <ul className="mt-2 space-y-1 text-xs text-slate-300">
-                <li>• Next.js + Tailwind (frontend)</li>
-                <li>• FastAPI on Render (backend)</li>
-                <li>• Supabase (Auth, DB, Storage)</li>
-                <li>• Meilisearch for search index</li>
-              </ul>
-            </div>
           </div>
         </div>
 
-        {/* Right side “status” card */}
-        <aside className="mt-4 w-full max-w-sm md:mt-0">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm">
-            <h2 className="text-sm font-semibold text-slate-100">
-              Project status
-            </h2>
-            <p className="mt-2 text-xs text-slate-300">
-              You&apos;re currently on the{" "}
-              <span className="font-semibold text-orange-300">frontend</span>{" "}
-              setup stage.
-            </p>
-
-            <ol className="mt-3 space-y-2 text-xs text-slate-300">
-              <li>✅ Step 1 – Node, Git, GitHub, Vercel setup</li>
-              <li>✅ Step 2 – Next.js app deployed to Vercel</li>
-              <li>🟡 Next – Supabase + backend + search worker</li>
-            </ol>
-
-            <p className="mt-4 text-[11px] text-slate-400">
-              This page will later connect to real data: documents,
-              search results, and comments from Supabase and Meilisearch.
-            </p>
-          </div>
-        </aside>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-950/80">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 text-[11px] text-slate-500">
-          <span>Fire Research Collaboration Platform • MVP UI</span>
-          <span>Built as GA project for fire investigation research</span>
+        <div className="mt-6 flex gap-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search (e.g., fire patterns, ventilation, drywall...)"
+            className="w-full rounded-xl bg-zinc-900 border border-white/10 px-4 py-3 outline-none"
+          />
+          <button
+            onClick={search}
+            className="rounded-xl bg-zinc-100 px-4 py-3 text-zinc-950 font-semibold hover:bg-white"
+          >
+            Search
+          </button>
+          <button
+            onClick={() => {
+              setQ("");
+              load();
+            }}
+            className="rounded-xl bg-white/10 px-4 py-3 hover:bg-white/15"
+          >
+            Clear
+          </button>
         </div>
-      </footer>
-    </main>
+
+        {msg ? <p className="mt-3 text-sm text-red-300">{msg}</p> : null}
+        {busy ? <p className="mt-3 text-sm text-zinc-400">Loading…</p> : null}
+
+        <div className="mt-6 space-y-3">
+          {docs.map((d, idx) => (
+            <Link
+              key={`${d.id}-${idx}-${d.page_number}`}
+              href={`/doc/${d.id}?page=${d.page_number}`}
+              className="block rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-semibold">{d.title || "Untitled"}</div>
+                <div className="text-xs text-zinc-400">
+                  Page {d.page_number} • Added:{" "}
+                  {d.created_at ? new Date(d.created_at).toLocaleString() : ""}
+                </div>
+              </div>
+              <p className="mt-2 text-sm text-zinc-300">{d.snippet}</p>
+            </Link>
+          ))}
+        </div>
+
+        <p className="mt-8 text-xs text-zinc-500">Backend: {API}</p>
+      </div>
+    </div>
   );
 }
