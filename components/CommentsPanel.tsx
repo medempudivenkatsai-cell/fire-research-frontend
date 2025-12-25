@@ -11,28 +11,32 @@ type Comment = {
   created_at: string;
 };
 
-export default function CommentsPanel({
-  apiBase,
-  documentId,
-  page,
-}: {
+type Props = {
   apiBase: string;
   documentId: string;
   page: number;
-}) {
+  sessionName?: string;
+};
+
+export default function CommentsPanel({ apiBase, documentId, page, sessionName }: Props) {
   const [items, setItems] = useState<Comment[]>([]);
-  const [author, setAuthor] = useState("Anonymous");
+  const [author, setAuthor] = useState(sessionName?.trim() || "Anonymous");
+  const [authorTouched, setAuthorTouched] = useState(false);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+
+  // If sessionName arrives later, auto-fill author only if user hasn't typed a name
+  useEffect(() => {
+    const s = sessionName?.trim();
+    if (!authorTouched && s) setAuthor(s);
+  }, [sessionName, authorTouched]);
 
   async function load() {
     if (!documentId) return;
     setMsg("");
     try {
-      const url = `${apiBase}/comments?document_id=${encodeURIComponent(
-        documentId
-      )}&page_number=${page}`;
+      const url = `${apiBase}/comments?document_id=${encodeURIComponent(documentId)}&page_number=${page}`;
       const r = await fetch(url);
       if (!r.ok) throw new Error(await r.text());
       const data = await r.json();
@@ -87,7 +91,10 @@ export default function CommentsPanel({
         <label className="text-xs text-zinc-400">Name (optional)</label>
         <input
           value={author}
-          onChange={(e) => setAuthor(e.target.value)}
+          onChange={(e) => {
+            setAuthorTouched(true);
+            setAuthor(e.target.value);
+          }}
           className="mt-1 w-full rounded-lg bg-zinc-900 border border-white/10 px-3 py-2 text-sm outline-none"
           placeholder="Anonymous"
         />
@@ -111,17 +118,12 @@ export default function CommentsPanel({
 
       <div className="mt-4 space-y-3">
         {items.map((c) => (
-          <div
-            key={c.id}
-            className="rounded-xl border border-white/10 bg-white/5 p-3"
-          >
+          <div key={c.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
             <div className="text-xs text-zinc-400">
               <span className="text-zinc-200">{c.author || "Anonymous"}</span> •{" "}
               {c.created_at ? new Date(c.created_at).toLocaleString() : ""}
             </div>
-            <div className="mt-1 text-sm text-zinc-200 whitespace-pre-wrap">
-              {c.body}
-            </div>
+            <div className="mt-1 text-sm text-zinc-200 whitespace-pre-wrap">{c.body}</div>
           </div>
         ))}
       </div>

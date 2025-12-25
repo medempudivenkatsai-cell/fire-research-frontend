@@ -1,23 +1,28 @@
 "use client";
 
-import "@react-pdf-viewer/core/lib/styles/index.css";
-import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+type Props = {
+  url: string;
+  page?: number; // 1-based
+  onPageChange?: (page: number) => void; // not supported in iframe (kept for compatibility)
+  className?: string;
+};
 
-import { Worker, Viewer } from "@react-pdf-viewer/core";
-import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
+export default function PDFViewerClient({ url, page = 1, className }: Props) {
+  if (!url) {
+    return <div className="text-sm text-zinc-200">No PDF URL provided.</div>;
+  }
 
-export default function PDFViewerClient({ url }: { url: string }) {
-  const defaultLayoutPluginInstance = defaultLayoutPlugin();
-
-  // IMPORTANT: keep this version matching your installed pdfjs-dist
-  const workerUrl =
-    "https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+  // Browser PDF viewers support #page=
+  const src = `${url}#page=${Math.max(1, page)}`;
 
   return (
-    <div className="h-full w-full rounded-xl border border-white/10 bg-black/20 overflow-hidden">
-      <Worker workerUrl={workerUrl}>
-        <Viewer fileUrl={url} plugins={[defaultLayoutPluginInstance]} />
-      </Worker>
+    <div className={className ?? ""} style={{ height: "100%", width: "100%" }}>
+      <iframe
+        key={src}
+        src={src}
+        title="PDF"
+        className="h-full w-full rounded-xl bg-white"
+      />
     </div>
   );
 }
